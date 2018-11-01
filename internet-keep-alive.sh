@@ -1,29 +1,34 @@
 #!/bin/ash
-
-# RUN THIS EVERY 2 MINS !!!! @cron
+# The main script file. I recommend putting into cron, e.g.:
+# */2 * * * * /root/internet-keep-alive/internet-keep-alive.sh
 
 DIR=$( cd $(dirname $0) ; pwd -P )
-log_file="$DIR/log.txt"
+LOG_FILE="$DIR/log.txt"
 
-# echo "$(date) Checking the internet connection" >> $log_file
+OFFLINE_COUNT=$(cat $LOG_FILE | tail -4 | grep OFFLINE | wc -l)
+OFFLINE_COUNT_TRESHOLD=4
 
-OFFLINE_COUNT=$(cat $log_file | tail -10 | grep OFFLINE | wc -l)
-echo "LAST 10 TESTS OFFLINE: $OFFLINE_COUNT"
-
-# EXECs
 SH_DNS_TESTS="$DIR/dns-test.sh"
 SH_RESTART_INTERFACE="$DIR/restart-interface.sh"
 SH_RESTART_ROUTER="$DIR/restart-router.sh"
 
-# exec
+LINES_MAX=11000
+LINES_MIN=6000
+LINES_COUNT=$(wc -l $LOG_FILE | awk '{print $1}')
+
+# if the log files gets huge, strip it, keep last LINES_MIN lines
+if [[ "$LINES_COUNT" -ge "$LINES_MAX" ]]; then
+   echo "$(tail -$LINES_MIN $LOG_FILE)" > $LOG_FILE
+fi
+
+# DNS test, it's result defines the ONLINE/OFFLINE state
 `$SH_DNS_TESTS`
 
-# deal with the result
 if [ $? -eq 1 ]; then
-   echo "OFFLINE"
-   echo "$(date) OFFLINE > RESTARTING INTERFACE" >> $log_file
+   echo "Ooops, we're offline!"
+   echo "$(date) OFFLINE > RESTARTING INTERFACE" >> $LOG_FILE
 
-   if [[ "$OFFLINE_COUNT" -ge 10 ]]; then
+   if [[ "$OFFLINE_COUNT" -ge "$OFFLINE_COUNT_TRESHOLD" ]]; then
       echo ">> Restarting router.."
       $SH_RESTART_ROUTER
    else
@@ -31,6 +36,6 @@ if [ $? -eq 1 ]; then
       $SH_RESTART_INTERFACE
    fi
 else
-   echo "ONLINE"
-   echo "$(date) ONLINE" >> $log_file
+   echo "We're okay!"
+   echo "$(date) ONLINE" >> $LOG_FILE
 fi

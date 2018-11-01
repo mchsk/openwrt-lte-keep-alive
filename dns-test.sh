@@ -1,26 +1,25 @@
 #!/bin/ash
+# This file is responsible for DNS check. The return value of its process
+# determines the ONLINE/OFFLINE state.
 
-# This file is responsible for DNS check.
+IP_TO_PING=8.8.8.8
+PACKET_COUNT=4
 
-# requires netcat package w kernel support (make menuconfig @openwrt)
+ONLINE=0
 
-ip=8.8.8.8
-n=4
-
-# -------
-online=0
-for i in `seq 1 $n`;
+for i in `seq 1 $PACKET_COUNT`;
         do
-                nc -G 2 -z $ip 53
+                nc -G 2 -z $IP_TO_PING 53
                 RETVAL=$?
 				if [ $RETVAL -eq 0 ]; then
-					online=1
+					ONLINE=1
 				fi
         done
-if [ $online -eq 1 ]; then
-    # echo "xDNS ping online" -> exit 0
+
+if [ $ONLINE -eq 1 ]; then
+    # ONLINE
     exit 0
 else
-    # echo "xDNS ping offline" -> exit 1
+    # OFFLINE
     exit 1
 fi
