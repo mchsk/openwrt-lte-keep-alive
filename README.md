@@ -17,8 +17,8 @@ Connection tests are being logged in `log.txt`, which has a cap of `11000` lines
 [Netcat](https://openwrt.org/packages/pkgdata/netcat) The TCP/IP Network R/W Utility. `opkg update && opkg install netcat`
 
 **Installation**<br>
-1. Go to the directory where you want to keep the script files<br>
-2. Run the installer<br>
+1. Log into the router via SSH and go to the directory where you want to keep the script files.<br>
+2. Make sure the router is online, then run the installer:<br>
    `wget -q --no-check-certificate https://raw.githubusercontent.com/mchsk/openwrt-lte-keep-alive/assets/install.sh -O install.sh && chmod +x install.sh && ./install.sh`
 
 Enjoy ❤️🏠📡📶!
