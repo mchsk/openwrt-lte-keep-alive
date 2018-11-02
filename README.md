@@ -8,13 +8,13 @@ If your `WAN` interface using `WWAN/QMI/NCM/3G protocol` with your modem is work
 
 **How it works?**<br>
 All the scripts run on [ash](https://www.in-ulm.de/~mascheck/various/ash/) which is the basic shell for OpenWRT.
-The main script (`internet-keep-alive.sh`) tries to ping Google DNS servers (8.8.8.8) using Netcat.<br>
+The main script (`internet-keep-alive.sh`) tries to ping Google DNS servers (8.8.8.8) using [Netcat](http://netcat.sourceforge.net/).<br>
 - If it fails, it restarts the interface.<br>
 - If it fails 4 times in a row, it restarts whole system.<br>
 Online/offline results are being logged into `log.txt`, which has a cap of `11000` lines, not to flood the whole space on the device.
 
 **Requirements**<br>
-[Netcat](https://openwrt.org/packages/pkgdata/netcat) The TCP/IP Network R/W Utility. The installer installs this package.
+[Netcat package](https://openwrt.org/packages/pkgdata/netcat) The TCP/IP Network R/W Utility. The installer installs this package.
 
 **Installation**<br>
 1. Log into the router via SSH and go to the directory where you want to keep the script files.<br>
