@@ -21,4 +21,6 @@ Online/offline results are being logged into `log.txt`, which has a cap of `1100
 2. Make sure the router is online, then **run the installer using this command** and follow the instructions:<br>
    `wget -q --no-check-certificate https://raw.githubusercontent.com/mchsk/openwrt-lte-keep-alive/assets/install.sh -O install.sh && chmod +x install.sh && ./install.sh`
 
+Simple, right?<br>
+
 Enjoy ❤️🏠📡📶!
