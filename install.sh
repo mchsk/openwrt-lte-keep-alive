@@ -8,6 +8,21 @@ install_netcat()
     opkg -V0 install netcat
 }
 
+finish(){
+	echo ""
+    echo "NICE ;)"
+    echo "There are 2 important steps to finish this setup:"
+    echo ""
+    echo "1. Make sure this line is in the cron. To do this, run: crontab -e"
+    echo "   */2 * * * * $DIR/internet-keep-alive.sh"
+    echo ""  
+    echo "2. The interface representing the LTE connection is set to 'wwan'. To edit this, edit the 'restart-interface.sh'."
+    echo ""
+    echo "Enjoy!"
+
+    rm install.sh
+}
+
 download_files()
 {
 	DIR=$( cd $(dirname $0) ; pwd -P )
@@ -16,23 +31,14 @@ download_files()
     wget -q --no-check-certificate https://raw.githubusercontent.com/mchsk/openwrt-lte-keep-alive/master/internet-keep-alive.sh -O internet-keep-alive.sh && chmod +x internet-keep-alive.sh
     wget -q --no-check-certificate https://raw.githubusercontent.com/mchsk/openwrt-lte-keep-alive/master/restart-interface.sh -O restart-interface.sh && chmod +x restart-interface.sh
     wget -q --no-check-certificate https://raw.githubusercontent.com/mchsk/openwrt-lte-keep-alive/master/restart-router.sh -O restart-router.sh && chmod +x restart-router.sh
-    echo ""
-    echo "NICE ;)"
-    echo ""
-    echo "1. Make sure this line is in the cron:"
-    echo "   */2 * * * * $DIR/internet-keep-alive.sh"
-    echo "   To do this, run: crontab -e"
-    echo "2. The interface representing the LTE connection is set to 'wwan'. To edit this, edit the 'restart-interface.sh'."
-    echo "3. Enjoy!"
-
-    rm install.sh
+    finish
 }
 
 echo ""
 echo "OpenWRT Keep-alive scripts."
 
 while true; do
-    read -p "This will install netcat as a prerequisite. Do you want to continue (y/n)?: " yn
+    read -p "This will install netcat as a prerequisite. Do you want to continue (y/n)? " yn
     case $yn in
         [Yy]* ) install_netcat; break;;
         [Nn]* ) exit;;
@@ -43,7 +49,7 @@ done
 echo ""
 DIR=$( cd $(dirname $0) ; pwd -P )
 while true; do
-    read -p "This will download the files into $DIR. Do you want to continue (y/n)?: " yn
+    read -p "This will download the files into $DIR. Do you want to continue (y/n)? " yn
     case $yn in
         [Yy]* ) download_files; break;;
         [Nn]* ) exit;;
