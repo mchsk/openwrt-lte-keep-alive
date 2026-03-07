@@ -1,0 +1,96 @@
+#!/bin/sh
+# LTE Keep-Alive daemon for OpenWrt
+# Monitors connectivity and restarts the WAN interface or reboots
+# when the connection drops. Designed for LTE/WWAN modems.
+
+. /lib/functions.sh
+
+PROG="lte-keepalive"
+DEFAULT_INTERFACE="wwan"
+DEFAULT_PING_TARGETS="8.8.8.8 1.1.1.1 9.9.9.9"
+DEFAULT_PING_COUNT=3
+DEFAULT_PING_TIMEOUT=5
+DEFAULT_CHECK_INTERVAL=120
+DEFAULT_RESTART_THRESHOLD=3
+DEFAULT_REBOOT_THRESHOLD=9
+DEFAULT_RESTART_DELAY=15
+
+load_config() {
+	config_load "$PROG"
+
+	config_get INTERFACE main interface "$DEFAULT_INTERFACE"
+	config_get PING_TARGETS main ping_targets "$DEFAULT_PING_TARGETS"
+	config_get PING_COUNT main ping_count "$DEFAULT_PING_COUNT"
+	config_get PING_TIMEOUT main ping_timeout "$DEFAULT_PING_TIMEOUT"
+	config_get CHECK_INTERVAL main check_interval "$DEFAULT_CHECK_INTERVAL"
+	config_get RESTART_THRESHOLD main restart_threshold "$DEFAULT_RESTART_THRESHOLD"
+	config_get REBOOT_THRESHOLD main reboot_threshold "$DEFAULT_REBOOT_THRESHOLD"
+	config_get RESTART_DELAY main restart_delay "$DEFAULT_RESTART_DELAY"
+}
+
+log_info() {
+	logger -t "$PROG" -p daemon.info "$1"
+}
+
+log_warn() {
+	logger -t "$PROG" -p daemon.warn "$1"
+}
+
+log_err() {
+	logger -t "$PROG" -p daemon.err "$1"
+}
+
+check_connectivity() {
+	local target
+	for target in $PING_TARGETS; do
+		if ping -c "$PING_COUNT" -W "$PING_TIMEOUT" -q "$target" >/dev/null 2>&1; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+restart_interface() {
+	log_warn "Restarting interface '$INTERFACE' (failure #$fail_count)"
+	ifdown "$INTERFACE"
+	sleep "$RESTART_DELAY"
+	ifup "$INTERFACE"
+	sleep "$RESTART_DELAY"
+}
+
+do_reboot() {
+	log_err "Too many failures ($fail_count), rebooting"
+	sync
+	reboot
+}
+
+main() {
+	load_config
+
+	log_info "Started: interface=$INTERFACE targets='$PING_TARGETS' interval=${CHECK_INTERVAL}s"
+	log_info "Thresholds: restart_after=$RESTART_THRESHOLD reboot_after=$REBOOT_THRESHOLD"
+
+	local fail_count=0
+
+	while true; do
+		if check_connectivity; then
+			if [ "$fail_count" -gt 0 ]; then
+				log_info "Connectivity restored after $fail_count failure(s)"
+			fi
+			fail_count=0
+		else
+			fail_count=$((fail_count + 1))
+			log_warn "Connectivity check failed ($fail_count/$REBOOT_THRESHOLD)"
+
+			if [ "$fail_count" -ge "$REBOOT_THRESHOLD" ]; then
+				do_reboot
+			elif [ "$((fail_count % RESTART_THRESHOLD))" -eq 0 ]; then
+				restart_interface
+			fi
+		fi
+
+		sleep "$CHECK_INTERVAL"
+	done
+}
+
+main
